@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var cameraManager: CameraManager
     lateinit var textureView: TextureView
     lateinit var model:SsdMobilenetV11Metadata1
+    private var textDisplayHandler = Handler()
+    private var textDisplayRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                         // Add detected object to list for bottom display
                         val objectName = labels.get(classes.get(index).toInt())
                         val confidence = String.format("%.2f", fl)
-                        detectedObjects.add("$objectName ($confidence)")
+                        detectedObjects.add("$objectName ")
                     }
                 }
 
@@ -106,10 +108,27 @@ class MainActivity : AppCompatActivity() {
 
                 // Update bottom text display
                 runOnUiThread {
+                    // Clear any existing timer
+                    textDisplayRunnable?.let { textDisplayHandler.removeCallbacks(it) }
+
                     if (detectedObjects.isNotEmpty()) {
-                        detectionTextView.text = "Detected: ${detectedObjects.joinToString(", ")}"
+                        detectionTextView.text = "Detected: ${detectedObjects.joinToString("")}"
+                        detectionTextView.visibility = android.view.View.VISIBLE
+
+                        // Set timer to hide text after 5 seconds
+                        textDisplayRunnable = Runnable {
+                            detectionTextView.visibility = android.view.View.INVISIBLE
+                        }
+                        textDisplayHandler.postDelayed(textDisplayRunnable!!, 5000)
                     } else {
                         detectionTextView.text = "No objects detected"
+                        detectionTextView.visibility = android.view.View.VISIBLE
+
+                        // Set timer to hide "No objects detected" text after 5 seconds
+                        textDisplayRunnable = Runnable {
+                            detectionTextView.visibility = android.view.View.INVISIBLE
+                        }
+                        textDisplayHandler.postDelayed(textDisplayRunnable!!, 5000)
                     }
                 }
 
@@ -123,6 +142,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         model.close()
+        // Clean up timer
+        textDisplayRunnable?.let { textDisplayHandler.removeCallbacks(it) }
     }
 
     @SuppressLint("MissingPermission")
