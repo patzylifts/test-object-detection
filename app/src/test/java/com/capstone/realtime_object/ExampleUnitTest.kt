@@ -1,4 +1,4 @@
-package com.programminghut.realtime_object
+package com.capstone.realtime_object
 
 import org.junit.Test
 

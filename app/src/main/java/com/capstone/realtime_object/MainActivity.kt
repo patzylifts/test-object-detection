@@ -1,4 +1,4 @@
-package com.programminghut.realtime_object
+package com.capstone.realtime_object
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -16,7 +16,7 @@ import android.view.TextureView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.programminghut.realtime_object.ml.SsdMobilenetV11Metadata1
+import com.capstone.realtime_object.ml.SsdMobilenetV11Metadata1
 import org.tensorflow.lite.support.common.FileUtil
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
