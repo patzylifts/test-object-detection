@@ -14,6 +14,7 @@ import android.os.HandlerThread
 import android.view.Surface
 import android.view.TextureView
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.programminghut.realtime_object.ml.SsdMobilenetV11Metadata1
 import org.tensorflow.lite.support.common.FileUtil
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var imageProcessor: ImageProcessor
     lateinit var bitmap:Bitmap
     lateinit var imageView: ImageView
+    lateinit var detectionTextView: TextView
     lateinit var cameraDevice: CameraDevice
     lateinit var handler: Handler
     lateinit var cameraManager: CameraManager
@@ -43,13 +45,14 @@ class MainActivity : AppCompatActivity() {
         get_permission()
 
         labels = FileUtil.loadLabels(this, "labels.txt")
-        imageProcessor = ImageProcessor.Builder().add(ResizeOp(300, 300, ResizeOp.ResizeMethod.BILINEAR)).build()
+        imageProcessor = ImageProcessor.Builder().add(ResizeOp(200, 200, ResizeOp.ResizeMethod.BILINEAR)).build()
         model = SsdMobilenetV11Metadata1.newInstance(this)
         val handlerThread = HandlerThread("videoThread")
         handlerThread.start()
         handler = Handler(handlerThread.looper)
 
         imageView = findViewById(R.id.imageView)
+        detectionTextView = findViewById(R.id.detectionTextView)
 
         textureView = findViewById(R.id.textureView)
         textureView.surfaceTextureListener = object:TextureView.SurfaceTextureListener{
@@ -82,6 +85,8 @@ class MainActivity : AppCompatActivity() {
                 paint.textSize = h/15f
                 paint.strokeWidth = h/85f
                 var x = 0
+                val detectedObjects = mutableListOf<String>()
+
                 scores.forEachIndexed { index, fl ->
                     x = index
                     x *= 4
@@ -89,13 +94,24 @@ class MainActivity : AppCompatActivity() {
                         paint.setColor(colors.get(index))
                         paint.style = Paint.Style.STROKE
                         canvas.drawRect(RectF(locations.get(x+1)*w, locations.get(x)*h, locations.get(x+3)*w, locations.get(x+2)*h), paint)
-                        paint.style = Paint.Style.FILL
-                        canvas.drawText(labels.get(classes.get(index).toInt())+" "+fl.toString(), locations.get(x+1)*w, locations.get(x)*h, paint)
+
+                        // Add detected object to list for bottom display
+                        val objectName = labels.get(classes.get(index).toInt())
+                        val confidence = String.format("%.2f", fl)
+                        detectedObjects.add("$objectName ($confidence)")
                     }
                 }
 
                 imageView.setImageBitmap(mutable)
 
+                // Update bottom text display
+                runOnUiThread {
+                    if (detectedObjects.isNotEmpty()) {
+                        detectionTextView.text = "Detected: ${detectedObjects.joinToString(", ")}"
+                    } else {
+                        detectionTextView.text = "No objects detected"
+                    }
+                }
 
             }
         }
